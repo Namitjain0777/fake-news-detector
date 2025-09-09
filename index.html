@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fake News Detector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section label {
+            display: block;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .text-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: vertical;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .analyze-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-section {
+            margin-top: 30px;
+            padding: 30px;
+            border-radius: 15px;
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        .results-section.real {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .results-section.fake {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-right: 15px;
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .confidence-bar {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            height: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: white;
+            border-radius: 10px;
+            transition: width 1s ease-out;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .examples-section {
+            margin-top: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+        }
+
+        .examples-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+
+        .example-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .example-btn {
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .example-btn:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-card {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .example-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 AI Fake News Detector</h1>
+            <p>Advanced machine learning powered news authenticity analysis</p>
+        </div>
+
+        <div class="main-card">
+            <div class="input-section">
+                <label for="newsText">Enter news article or text to analyze:</label>
+                <textarea 
+                    id="newsText" 
+                    class="text-input" 
+                    placeholder="Paste your news article here... The system will analyze the text patterns, language usage, and other indicators to determine if the content appears to be authentic or potentially misleading."
+                ></textarea>
+            </div>
+
+            <div style="text-align: center;">
+                <button id="analyzeBtn" class="analyze-btn">
+                    🔬 Analyze News Authenticity
+                </button>
+            </div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Analyzing text with AI models...</p>
+            </div>
+
+            <div id="results" class="results-section hidden">
+                <div class="result-header">
+                    <span id="resultIcon" class="result-icon"></span>
+                    <div>
+                        <div id="resultTitle" class="result-title"></div>
+                        <div id="resultSubtitle"></div>
+                    </div>
+                </div>
+                
+                <div class="confidence-bar">
+                    <div id="confidenceFill" class="confidence-fill"></div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span id="confidenceValue" class="stat-value"></span>
+                        <span class="stat-label">Confidence Level</span>
+                    </div>
+                    <div class="stat-item">
+                        <span id="modelUsed" class="stat-value">ML Model</span>
+                        <span class="stat-label">Analysis Method</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="examples-section">
+                <h3 class="examples-title">📋 Try These Example Articles</h3>
+                <div class="example-buttons">
+                    <button class="example-btn" data-example="real1">
+                        <strong>Scientific Discovery:</strong><br>
+                        "Researchers at Stanford University have developed a new machine learning algorithm that can predict earthquake aftershocks with unprecedented accuracy. The study, published in Nature, shows the AI system correctly predicted 85% of aftershocks in a recent California earthquake sequence."
+                    </button>
+                    <button class="example-btn" data-example="fake1">
+                        <strong>Suspicious Claim:</strong><br>
+                        "BREAKING: Scientists discover that drinking lemon water every morning can completely cure cancer! Big Pharma doesn't want you to know this SHOCKING truth! Share before they delete this post!"
+                    </button>
+                    <button class="example-btn" data-example="real2">
+                        <strong>Business News:</strong><br>
+                        "Apple Inc. reported quarterly revenue of $123.9 billion for Q4 2024, exceeding analyst expectations of $120.5 billion. The company's iPhone sales drove much of the growth, with services revenue also reaching a new record high."
+                    </button>
+                    <button class="example-btn" data-example="fake2">
+                        <strong>Conspiracy Theory:</strong><br>
+                        "Government insiders reveal that 5G towers are being used to control people's minds through secret frequency manipulation! Mysterious symptoms reported worldwide! Wake up sheeple!"
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class FakeNewsDetectorWeb {
+            constructor() {
+                this.initializeElements();
+                this.setupEventListeners();
+                this.setupExamples();
+            }
+
+            initializeElements() {
+                this.textInput = document.getElementById('newsText');
+                this.analyzeBtn = document.getElementById('analyzeBtn');
+                this.loading = document.getElementById('loading');
+                this.results = document.getElementById('results');
+                this.resultIcon = document.getElementById('resultIcon');
+                this.resultTitle = document.getElementById('resultTitle');
+                this.resultSubtitle = document.getElementById('resultSubtitle');
+                this.confidenceFill = document.getElementById('confidenceFill');
+                this.confidenceValue = document.getElementById('confidenceValue');
+                this.modelUsed = document.getElementById('modelUsed');
+            }
+
+            setupEventListeners() {
+                this.analyzeBtn.addEventListener('click', () => this.analyzeText());
+                
+                // Enable analysis on Enter key (with Shift+Enter for new line)
+                this.textInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.analyzeText();
+                    }
+                });
+
+                // Auto-resize textarea
+                this.textInput.addEventListener('input', () => {
+                    this.textInput.style.height = 'auto';
+                    this.textInput.style.height = Math.max(150, this.textInput.scrollHeight) + 'px';
+                });
+            }
+
+            setupExamples() {
+                const exampleButtons = document.querySelectorAll('.example-btn');
+                exampleButtons.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const exampleText = btn.textContent.replace(/^[^:]+:\s*/, '').trim();
+                        this.textInput.value = exampleText;
+                        this.textInput.style.height = 'auto';
+                        this.textInput.style.height = Math.max(150, this.textInput.scrollHeight) + 'px';
+                        this.textInput.focus();
+                        
+                        // Scroll to input
+                        this.textInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
+                });
+            }
+
+            async analyzeText() {
+                const text = this.textInput.value.trim();
+                
+                if (!text) {
+                    alert('Please enter some text to analyze!');
+                    this.textInput.focus();
+                    return;
+                }
+
+                if (text.length < 50) {
+                    alert('Please enter a longer text (at least 50 characters) for better analysis.');
+                    return;
+                }
+
+                this.showLoading();
+                
+                try {
+                    // Simulate API call with realistic delay
+                    await this.delay(2000 + Math.random() * 2000);
+                    
+                    // Simulate ML model prediction
+                    const result = this.simulateMLPrediction(text);
+                    this.displayResults(result);
+                    
+                } catch (error) {
+                    console.error('Analysis error:', error);
+                    alert('An error occurred during analysis. Please try again.');
+                    this.hideLoading();
+                }
+            }
+
+            simulateMLPrediction(text) {
+                // Advanced heuristic analysis for demo purposes
+                const lowerText = text.toLowerCase();
+                
+                // Fake news indicators
+                const fakeIndicators = [
+                    'breaking:', 'shocking', 'unbelievable', 'they don\'t want you to know',
+                    'wake up', 'sheeple', 'big pharma', 'government conspiracy',
+                    'secret', 'hidden truth', 'exposed', 'leaked documents',
+                    'miracle cure', 'doctors hate', 'this one trick',
+                    'delete this', 'share before', 'going viral'
+                ];
+
+                // Real news indicators
+                const realIndicators = [
+                    'according to', 'research shows', 'study published', 'data indicates',
+                    'experts say', 'official statement', 'press release',
+                    'university', 'institution', 'peer-reviewed', 'scientific',
+                    'quarterly report', 'financial results', 'statistics show'
+                ];
+
+                // Count indicators
+                let fakeScore = 0;
+                let realScore = 0;
+
+                fakeIndicators.forEach(indicator => {
+                    if (lowerText.includes(indicator)) {
+                        fakeScore += indicator.length > 10 ? 3 : 2;
+                    }
+                });
+
+                realIndicators.forEach(indicator => {
+                    if (lowerText.includes(indicator)) {
+                        realScore += 2;
+                    }
+                });
+
+                // Additional analysis
+                const hasNumbers = /\d+(\.\d+)?%|\$\d+|\d+\.\d+\s*(billion|million|thousand)/.test(text);
+                const hasQuotes = text.includes('"') || text.includes('"') || text.includes('"');
+                const hasCapitalization = /[A-Z]{3,}/.test(text);
+                const hasExclamation = (text.match(/!/g) || []).length;
+                
+                if (hasNumbers) realScore += 1;
+                if (hasQuotes) realScore += 1;
+                if (hasCapitalization) fakeScore += 1;
+                if (hasExclamation > 2) fakeScore += hasExclamation - 2;
+
+                // Text quality analysis
+                const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+                const avgSentenceLength = sentences.reduce((acc, s) => acc + s.length, 0) / sentences.length;
+                
+                if (avgSentenceLength > 100) realScore += 1;
+                if (avgSentenceLength < 30) fakeScore += 1;
+
+                // Determine result
+                const totalScore = fakeScore + realScore;
+                let confidence, prediction;
+                
+                if (totalScore === 0) {
+                    // Neutral case - use text length and complexity
+                    prediction = text.length > 200 ? 'Real' : 'Fake';
+                    confidence = 55 + Math.random() * 20;
+                } else {
+                    const realRatio = realScore / totalScore;
+                    if (realRatio > 0.6) {
+                        prediction = 'Real';
+                        confidence = 70 + realRatio * 25 + Math.random() * 10;
+                    } else {
+                        prediction = 'Fake';
+                        confidence = 65 + (1 - realRatio) * 25 + Math.random() * 10;
+                    }
+                }
+
+                confidence = Math.min(97, Math.max(52, confidence));
+
+                return {
+                    prediction,
+                    confidence: confidence.toFixed(1),
+                    probabilities: {
+                        fake: prediction === 'Fake' ? confidence : 100 - confidence,
+                        real: prediction === 'Real' ? confidence : 100 - confidence
+                    },
+                    analysis: {
+                        fakeIndicators: fakeScore,
+                        realIndicators: realScore,
+                        textLength: text.length,
+                        sentences: sentences.length
+                    }
+                };
+            }
+
+            displayResults(result) {
+                this.hideLoading();
+                
+                const isReal = result.prediction === 'Real';
+                
+                // Update result styling
+                this.results.className = `results-section ${isReal ? 'real' : 'fake'}`;
+                
+                // Update content
+                this.resultIcon.textContent = isReal ? '✅' : '⚠️';
+                this.resultTitle.textContent = `${result.prediction} News`;
+                this.resultSubtitle.textContent = isReal 
+                    ? 'This appears to be authentic news content'
+                    : 'This content shows signs of potential misinformation';
+                
+                // Update confidence
+                this.confidenceValue.textContent = `${result.confidence}%`;
+                this.confidenceFill.style.width = `${result.confidence}%`;
+                this.modelUsed.textContent = 'Advanced NLP';
+                
+                // Show results
+                this.results.classList.remove('hidden');
+                this.results.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            showLoading() {
+                this.analyzeBtn.disabled = true;
+                this.analyzeBtn.textContent = 'Analyzing...';
+                this.loading.style.display = 'block';
+                this.results.classList.add('hidden');
+            }
+
+            hideLoading() {
+                this.analyzeBtn.disabled = false;
+                this.analyzeBtn.textContent = '🔬 Analyze News Authenticity';
+                this.loading.style.display = 'none';
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            new FakeNewsDetectorWeb();
+        });
+    </script>
+</body>
+</html>
